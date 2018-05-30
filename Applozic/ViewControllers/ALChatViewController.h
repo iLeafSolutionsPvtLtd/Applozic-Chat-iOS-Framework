@@ -28,7 +28,7 @@
 
 @end
 
-@interface ALChatViewController : ALBaseViewController<UITableViewDataSource,UITableViewDelegate,UIActionSheetDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,ALMapViewControllerDelegate,ALChatCellDelegate,CNContactPickerDelegate>
+@interface ALChatViewController : ALBaseViewController<UITableViewDataSource,UITableViewDelegate,UIActionSheetDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,ALMapViewControllerDelegate,ALChatCellDelegate,CNContactPickerDelegate,UITabBarControllerDelegate>
 
 @property (strong, nonatomic) ALContact * alContact;
 @property (nonatomic, strong) ALChannel * alChannel;
@@ -53,6 +53,7 @@
 
 @property (strong, nonatomic) id <ALChatViewControllerDelegate> chatViewDelegate;
 
+-(void) deleteConversation;
 -(void)fetchAndRefresh;
 -(void)fetchAndRefresh:(BOOL)flag;
 

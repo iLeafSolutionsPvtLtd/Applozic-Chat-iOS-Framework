@@ -69,6 +69,8 @@
 #import "ALVOIPNotificationHandler.h"
 #import "ALChannelService.h"
 #import <Applozic/Applozic-Swift.h>
+#import "StickerCell.h"
+#import "StickerTableCell.h"
 
 #define MQTT_MAX_RETRY 3
 #define NEW_MESSAGE_NOTIFICATION @"newMessageNotification"
@@ -120,6 +122,8 @@
 @property (nonatomic) BOOL isUserBlocked;
 @property (nonatomic) BOOL isUserBlockedBy;
 @property (weak, nonatomic) IBOutlet UIButton *attachmentButton;
+@property (strong, nonatomic) IBOutlet UIView *keyboardView;
+@property (weak, nonatomic) IBOutlet UICollectionView *stickerCollectionView;
 
 -(void)processAttachment:(NSString *)filePath andMessageText:(NSString *)textwithimage andContentType:(short)contentype;
 
@@ -155,6 +159,7 @@
     CGRect minHeight;
     
     ALMessageDBService * dbService;
+    NSArray *stickerArray;
 }
 
 //==============================================================================================================================================
@@ -164,7 +169,10 @@
 -(void)viewDidLoad
 {
     [super viewDidLoad];
-
+  stickerArray = [NSArray arrayWithObjects:@"Sticker1", @"Sticker2", @"Sticker3", @"Sticker4", @"Sticker5", @"Sticker6", @"Sticker7", @"Sticker8", @"Sticker9", @"Sticker10", @"Sticker11", @"Sticker12", @"Sticker13", @"Sticker14", @"Sticker15", nil];
+    self.stickerCollectionView.delegate = self;
+    self.stickerCollectionView.dataSource = self;
+    
     // Setup quick recording if it's enabled in the settings
     if([ALApplozicSettings isQuickAudioRecordingEnabled]) {
         [self setUpSoundRecordingView];
@@ -180,6 +188,8 @@
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateVOIPMsg)
                                                  name:@"UPDATE_VOIP_MSG" object:nil];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[[UIView alloc]initWithFrame:CGRectMake(0, 0, 20, 30)]] ;
+    self.tabBarController.delegate = self;
 }
 
 -(void)viewDidAppear:(BOOL)animated
@@ -209,7 +219,7 @@
     [[NSNotificationCenter defaultCenter]
      addObserver:self selector:@selector(newMessageHandler:) name:NEW_MESSAGE_NOTIFICATION  object:nil];
     
-    [self.tabBarController.tabBar setHidden: YES];
+    //[self.tabBarController.tabBar setHidden: YES];
 
     // In iOS 11, TableView by default starts estimating the row height. This setting will disable that.
     self.mTableView.estimatedRowHeight = 0;
@@ -252,7 +262,7 @@
     }
     
     if (self.refresh) {
-        self.refresh = false;
+    //    self.refresh = false;
     }
     
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillEnterForegroundNotification object:nil];
@@ -428,7 +438,7 @@
 {
     [super viewWillDisappear:animated];
     
-    [self.tabBarController.tabBar setHidden:YES];
+   // [self.tabBarController.tabBar setHidden:YES];
     [self resetMessageReplyView];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"notificationIndividualChat" object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"report_DELIVERED" object:nil];
@@ -1617,12 +1627,19 @@
     }
     else if (theMessage.contentType == ALMESSAGE_CONTENT_DEFAULT)       // textCell
     {
+        
+        if ([theMessage.metadata[@"sticker"] length]>0){
+            StickerTableCell * stickerCell = (StickerTableCell*)[tableView dequeueReusableCellWithIdentifier:@"StickerTableCell"];
+            [stickerCell populateStickerCell:theMessage];
+            return stickerCell;
+        }else{
         ALChatCell *theCell = (ALChatCell *)[tableView dequeueReusableCellWithIdentifier:@"ChatCell"];
         theCell.tag = indexPath.row;
         theCell.delegate = self;
         [theCell populateCell:theMessage viewSize:self.view.frame.size];
         [self.view layoutIfNeeded];
         return theCell;
+        }
         
     }
     else if (theMessage.contentType == ALMESSAGE_CONTENT_VCARD)
@@ -2653,93 +2670,87 @@
     
     [ALUtilityClass setAlertControllerFrame:theController andViewController:self];
     
-    [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"cancelOptionText", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"Cancel", @"") style:UIAlertActionStyleCancel handler:nil]];
-    if(![ALApplozicSettings isCameraOptionHidden]){
-        [theController addAction:[UIAlertAction actionWithTitle:NSLocalizedStringWithDefaultValue(@"takePhotoText", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"Take photo", @"") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-
-            [self openCamera];
-        }]];
-    }
-    if(![ALApplozicSettings isLocationOptionHidden]){
-        [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"currentLocationOption", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"Current location", @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-
-            [self openLocationView];
-        }]];
-    }
-
-    if(![ALApplozicSettings isSendAudioOptionHidden]){
-        [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"sendAudioOption", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"Send Audio", @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-
-            [self openAudioMic];
-        }]];
-    }
-
-    if(![ALApplozicSettings isSendVideoOptionHidden]){
-        [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"sendVideoOption", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle],  @"Send Video", @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-
-            [self openVideoCamera];
-        }]];
+    [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"cancelOptionText", nil, [NSBundle mainBundle], @"Cancel", @"") style:UIAlertActionStyleCancel handler:nil]];
+    
+    [theController addAction:[UIAlertAction actionWithTitle:NSLocalizedStringWithDefaultValue(@"takePhotoText", nil, [NSBundle mainBundle], @"Take photo", @"") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        
+        [self openCamera];
+    }]];
+    
+    //    [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"currentLocationOption", nil, [NSBundle mainBundle], @"Current location", @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    //
+    //        [self openLocationView];
+    //    }]];
+    
+    
+    //    [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"sendAudioOption", nil, [NSBundle mainBundle], @"Send Audio", @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    //
+    //        [self openAudioMic];
+    //    }]];
+    
+    //    [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"sendVideoOption", nil, [NSBundle mainBundle],  @"Send Video", @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    //
+    //        [self openVideoCamera];
+    //    }]];
+    
+    if((!self.channelKey && !self.conversationId) || (self.alChannel.type == GROUP_OF_TWO))
+    {
+        //        [theController addAction:[UIAlertAction actionWithTitle:NSLocalizedStringWithDefaultValue(@"blockUserOption", nil, [NSBundle mainBundle], @"BLOCK USER", @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        //
+        //            if(![ALDataNetworkConnection checkDataNetworkAvailable])
+        //            {
+        //                [self showNoDataNotification];
+        //                return;
+        //            }
+        //
+        //            ALUserService *userService = [ALUserService new];
+        //            [userService blockUser:self.contactIds withCompletionHandler:^(NSError *error, BOOL userBlock) {
+        //
+        //                if(userBlock)
+        //                {
+        //                    self.isUserBlocked = YES;
+        //                    [self.label setHidden:self.isUserBlocked];
+        //                    [self.typingLabel setHidden:self.isUserBlocked];
+        //                    NSString * alertText = [NSString stringWithFormat:[@"%@ " stringByAppendingString:NSLocalizedStringWithDefaultValue(@"blockedSuccessfullyText", nil, [NSBundle mainBundle], @"is blocked successfully", @"")], [self.alContact getDisplayName]];
+        //                    [ALUtilityClass showAlertMessage:alertText andTitle:NSLocalizedStringWithDefaultValue(@"userBlock", nil, [NSBundle mainBundle], @"USER BLOCK", @"")  ];
+        //                }
+        //            }];
+        //        }]];
     }
     
-    if(((!self.channelKey && !self.conversationId) || (self.alChannel.type == GROUP_OF_TWO)) && ![ALApplozicSettings isBlockUserOptionHidden])
-    {
-        [theController addAction:[UIAlertAction actionWithTitle:NSLocalizedStringWithDefaultValue(@"blockUserOption", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"BLOCK USER", @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            
-            if(![ALDataNetworkConnection checkDataNetworkAvailable])
-            {
-                [self showNoDataNotification];
-                return;
-            }
-            
-            ALUserService *userService = [ALUserService new];
-            [userService blockUser:self.contactIds withCompletionHandler:^(NSError *error, BOOL userBlock) {
-                
-                if(userBlock)
-                {
-                    self.isUserBlocked = YES;
-                    [self.label setHidden:self.isUserBlocked];
-                    [self.typingLabel setHidden:self.isUserBlocked];
-                    NSString * alertText = [NSString stringWithFormat:[@"%@ " stringByAppendingString:NSLocalizedStringWithDefaultValue(@"blockedSuccessfullyText", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"is blocked successfully", @"")], [self.alContact getDisplayName]];
-                    [ALUtilityClass showAlertMessage:alertText andTitle:NSLocalizedStringWithDefaultValue(@"userBlock", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"USER BLOCK", @"")  ];
-                }
-            }];
-        }]];
-    }
-    if(![ALApplozicSettings isShareContactOptionHidden]){
-        [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"shareContact", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"Share Contact", @"") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-
-            [self openContactsView];
-        }]];
-    }
-
-    if(![ALApplozicSettings isPhotoGalleryOptionHidden]){
-        [theController addAction:[UIAlertAction actionWithTitle:NSLocalizedStringWithDefaultValue(@"photosOrVideoOption", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"Photos/Videos" , @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-
-            UIStoryboard* storyboardM = [UIStoryboard storyboardWithName:@"Applozic" bundle:[NSBundle bundleForClass:ALChatViewController.class]];
-            ALMultipleAttachmentView *launchChat = (ALMultipleAttachmentView *)[storyboardM instantiateViewControllerWithIdentifier:@"collectionView"];
-            launchChat.multipleAttachmentDelegate = self;
-            [self.navigationController pushViewController:launchChat animated:YES];
-        }]];
-    }
-   
+    //    [theController addAction:[UIAlertAction actionWithTitle: NSLocalizedStringWithDefaultValue(@"shareContact", nil, [NSBundle mainBundle], @"Share Contact", @"") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    //
+    //        [self openContactsView];
+    //    }]];
+    
+    [theController addAction:[UIAlertAction actionWithTitle:NSLocalizedStringWithDefaultValue(@"photosOrVideoOption", nil, [NSBundle mainBundle], @"Gallery" , @"")  style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        
+        UIStoryboard* storyboardM = [UIStoryboard storyboardWithName:@"Applozic" bundle:[NSBundle bundleForClass:ALChatViewController.class]];
+        ALMultipleAttachmentView *launchChat = (ALMultipleAttachmentView *)[storyboardM instantiateViewControllerWithIdentifier:@"collectionView"];
+        launchChat.multipleAttachmentDelegate = self;
+        [self.navigationController pushViewController:launchChat animated:YES];
+        
+    }]];
+    
     if(!self.channelKey && !self.conversationId && [ALApplozicSettings isAudioVideoEnabled])
     {
-    
-        [theController addAction:[UIAlertAction actionWithTitle:  NSLocalizedStringWithDefaultValue(@"videoCall", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"Video Call" , @"")
-style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            
-            [self openCallView:NO];
-        }]];
         
-        [theController addAction:[UIAlertAction actionWithTitle:NSLocalizedStringWithDefaultValue(@"audioCall", [ALApplozicSettings getLocalizableName], [NSBundle mainBundle], @"Audio Call" , @"")
- style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            
-            [self openCallView:YES];
-        }]];
+        [theController addAction:[UIAlertAction actionWithTitle:  NSLocalizedStringWithDefaultValue(@"videoCall", nil, [NSBundle mainBundle], @"Video Call" , @"")
+                                                          style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                                                              
+                                                              [self openCallView:NO];
+                                                          }]];
+        
+        [theController addAction:[UIAlertAction actionWithTitle:NSLocalizedStringWithDefaultValue(@"audioCall", nil, [NSBundle mainBundle], @"Audio Call" , @"")
+                                                          style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                                                              
+                                                              [self openCallView:YES];
+                                                          }]];
     }
     
     [self presentViewController:theController animated:YES completion:nil];
 }
+
 
 //==============================================================================================================================================
 #pragma mark - ABPEOPLE PICKER DELEGATE METHOD
@@ -3264,6 +3275,38 @@ style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
 {
     [self processLoadEarlierMessages:false];
 }
+-(void) deleteConversation{
+
+    [ALMessageService deleteMessageThread:self.contactIds orChannelKey:self.channelKey
+     
+                           withCompletion:^(NSString *string, NSError *error) {
+
+                    if(error)
+                               
+                    {
+                                   
+                        NSLog(@"DELETE_FAILED_CONVERSATION_ERROR_DESCRIPTION :: %@", error.description);
+                                   
+                        [ALUtilityClass displayToastWithMessage:@"Delete failed"];
+                                   
+                    return;
+                                   
+                    }
+
+                    [[self.alMessageWrapper getUpdatedMessageArray] removeAllObjects];
+                               
+                    [UIView animateWithDuration:0.5 animations:^{
+                                   
+                    [self.mTableView reloadData];
+                                   
+                [self showNoConversationLabel];
+                                   
+            }];
+
+            }];
+    
+}
+
 
 -(void)processLoadEarlierMessages:(BOOL)isScrollToBottom
 {
@@ -4393,5 +4436,134 @@ style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     self.viewHeightConstraints.constant=0;
     self.messageReplyView.hidden =1;
     self.messageReplyId=nil;
+}
+
+#pragma mark -
+#pragma mark UITabBarControllerDelegate
+
+- (BOOL)tabBarController:(UITabBarController *)tbc shouldSelectViewController:(UIViewController *)vc {
+    UIViewController *tbSelectedController = tbc.selectedViewController;
+    
+    if ([tbSelectedController isEqual:vc]) {
+        return NO;
+    }
+    
+    return YES;
+}
+
+- (IBAction)stickerBtnPressed:(UIButton *)sender {
+    NSLog(@"Sticker pressed");
+    
+    if (self.sendMessageTextView.inputView == self.keyboardView){
+        self.sendMessageTextView.inputView = nil;
+        [self.sendMessageTextView reloadInputViews];
+    }else{
+        self.sendMessageTextView.inputView = self.keyboardView;
+        [self.sendMessageTextView reloadInputViews];
+        
+        if (![self.sendMessageTextView isFirstResponder]){
+            [self.sendMessageTextView becomeFirstResponder];
+        }
+    }
+    
+}
+
+#pragma mark -
+#pragma mark STICKER
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+    return stickerArray.count;
+}
+
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    static NSString *identifier = @"CellSticker";
+    
+    StickerCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:identifier forIndexPath:indexPath];
+    NSBundle * bundle = [NSBundle bundleWithIdentifier:@"org.cocoapods.Applozic"];
+    UIImage * ima = [UIImage imageNamed:[stickerArray objectAtIndex:indexPath.row] inBundle:bundle compatibleWithTraitCollection:nil];
+    // cell.imgView.image = [UIImage imageNamed:[stickerArray objectAtIndex:indexPath.row]];
+    cell.imgView.image = ima;
+    return cell;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    NSString* sticker = [stickerArray objectAtIndex:indexPath.row];
+    [self postMessageForSticker:sticker];
+}
+
+-(ALMessage *)getMessageToPostForSticker:(NSString*)stickerID
+{
+    ALMessage * theMessage = [ALMessage new];
+    
+    theMessage.type = @"5";
+    theMessage.contactIds = self.contactIds;
+    theMessage.to = self.contactIds;
+    theMessage.createdAtTime = [NSNumber numberWithDouble:[[NSDate date] timeIntervalSince1970] * 1000];
+    theMessage.deviceKey = [ALUserDefaultsHandler getDeviceKeyString];
+    theMessage.message = @"Sticker";
+    theMessage.sendToDevice = NO;
+    theMessage.shared = NO;
+    theMessage.fileMeta = nil;
+    theMessage.storeOnDevice = NO;
+    theMessage.key = [[NSUUID UUID] UUIDString];
+    theMessage.delivered = NO;
+    theMessage.fileMetaKey = @"";//4
+    theMessage.contentType = ALMESSAGE_CONTENT_DEFAULT;
+    theMessage.groupId = self.channelKey;
+    theMessage.conversationId  = self.conversationId;
+    theMessage.source = SOURCE_IOS;
+    theMessage.userKey = stickerID;
+    NSDictionary * meta = [[NSDictionary alloc]initWithObjectsAndKeys:stickerID,@"sticker", nil];
+    //    theMessage.metadata = [self getNewMetaDataDictionary]; // EXAMPLE FOR META DATA
+    theMessage.metadata = meta;
+    return theMessage;
+}
+
+-(void)postMessageForSticker:(NSString*)stickerID
+{
+    if(self.isUserBlocked)
+    {
+        [self showBlockedAlert];
+        return;
+    }
+    
+    //    if (!self.sendMessageTextView.text.length || [self.sendMessageTextView.text isEqualToString:self.placeHolderTxt])
+    //    {
+    //        [ALUtilityClass showAlertMessage:NSLocalizedStringWithDefaultValue(@"forgetToTypeMessageInfo", nil, [NSBundle mainBundle], @"Did you forget to type the message", @"")  andTitle:NSLocalizedStringWithDefaultValue(@"emptyText", nil, [NSBundle mainBundle], @"Empty", @"")];
+    //        return;
+    //    }
+    
+    if([ALApplozicSettings getMessageAbuseMode] && [self checkRestrictWords:self.sendMessageTextView.text])
+    {
+        [ALUtilityClass showAlertMessage:[ALApplozicSettings getAbuseWarningText] andTitle:NSLocalizedStringWithDefaultValue(@"warningText", nil, [NSBundle mainBundle], @"WARNING", @"")];
+        return;
+    }
+    
+    
+    ALMessage * theMessage = [self getMessageToPostForSticker:stickerID];
+    [self.alMessageWrapper addALMessageToMessageArray:theMessage];
+    [self.mTableView reloadData];
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self scrollTableViewToBottomWithAnimation:YES];
+    });
+    // save message to db
+    [self showNoConversationLabel];
+    [self.sendMessageTextView setText:nil];
+    self.mTotalCount = self.mTotalCount + 1;
+    self.startIndex = self.startIndex + 1;
+    [self sendMessage:theMessage];
+    
+    if(typingStat == YES)
+    {
+        typingStat = NO;
+        [self.mqttObject sendTypingStatus:self.alContact.applicationId userID:self.contactIds
+                            andChannelKey:self.channelKey typing:typingStat];
+    }
+    dispatch_after(DISPATCH_TIME_NOW+6.0, dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter]postNotificationName:@"BBCHATSENT" object:theMessage];
+    });
+    
+    
 }
 @end

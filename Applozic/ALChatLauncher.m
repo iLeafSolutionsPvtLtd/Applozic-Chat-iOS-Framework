@@ -47,6 +47,33 @@
     return navC;
 }
 
+-(UINavigationController *)launchIndividualChatLevin:(NSString *)userId withGroupId:(NSNumber*)groupID  andViewControllerObject:(UIViewController *)viewController andWithText:(NSString *)text andName:(NSString *)diplayName
+{
+    self.chatLauncherFLAG = [NSNumber numberWithInt:1];
+    
+    if(groupID){
+        [self launchIndividualChatForGroup:userId withGroupId:groupID withDisplayName:nil andViewControllerObject:viewController andWithText:text];
+    }else{
+        UIStoryboard* storyboard = [UIStoryboard storyboardWithName:@"Applozic" bundle:[NSBundle bundleForClass:ALChatViewController.class]];
+        
+        ALChatViewController * chatView = (ALChatViewController *) [storyboard instantiateViewControllerWithIdentifier:@"ALChatViewController"];
+        
+        chatView.channelKey = groupID;
+        chatView.contactIds = userId;
+        chatView.text = text;
+        chatView.displayName = diplayName;
+        chatView.individualLaunch = YES;
+        chatView.chatViewDelegate = self;
+        NSLog(@"CALLED_VIA_NOTIFICATION");
+        
+        
+        UINavigationController * conversationViewNavController = [self createNavigationControllerForVC:chatView];
+        //   conversationViewNavController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+        //        [viewController presentViewController:conversationViewNavController animated:YES completion:nil];
+        return  conversationViewNavController;
+    }
+    return nil;
+}
 -(void)launchIndividualChat:(NSString *)userId withGroupId:(NSNumber*)groupID
     andViewControllerObject:(UIViewController *)viewController andWithText:(NSString *)text
 {

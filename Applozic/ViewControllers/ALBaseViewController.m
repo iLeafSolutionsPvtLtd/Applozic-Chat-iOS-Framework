@@ -63,7 +63,7 @@ static CGFloat const sendTextViewCornerRadius = 15.0f;
     self.placeHolderColor = [ALApplozicSettings getPlaceHolderColor];
     self.sendMessageTextView.textColor = self.placeHolderColor;
     self.sendMessageTextView.backgroundColor = [ALApplozicSettings getMsgTextViewBGColor];
-    
+     self.sendMessageTextView.backgroundColor = [UIColor whiteColor];
     
     if ([ALUtilityClass parsedALChatCostomizationPlistForKey:APPLOZIC_CHAT_BACKGROUND_COLOR])
         self.mTableView.backgroundColor = (UIColor *)[ALUtilityClass parsedALChatCostomizationPlistForKey:APPLOZIC_CHAT_BACKGROUND_COLOR];
@@ -329,6 +329,7 @@ static CGFloat const sendTextViewCornerRadius = 15.0f;
     
     [self.typeMsgBG setImage:image];
     [self.typingMessageView setBackgroundColor:[ALApplozicSettings getColorForTypeMsgBackground]];
+    [self.typingMessageView setBackgroundColor:[UIColor whiteColor]];
 }
 
 -(void)viewWillDisappear:(BOOL)animated
@@ -379,7 +380,9 @@ static CGFloat const sendTextViewCornerRadius = 15.0f;
         [self scrollTableViewToBottomWithAnimation:YES];
     } completion:^(BOOL finished) {
         if (finished) {
+             [self.view layoutIfNeeded];
             [self scrollTableViewToBottomWithAnimation:YES];
+            
         }
     }];
 }
@@ -443,6 +446,7 @@ static CGFloat const sendTextViewCornerRadius = 15.0f;
 {
     if (self.mTableView.contentSize.height > self.mTableView.frame.size.height)
     {
+        
         CGPoint offset = CGPointMake(0, self.mTableView.contentSize.height - self.mTableView.frame.size.height);
         [self.mTableView setContentOffset:offset animated:animated];
     }

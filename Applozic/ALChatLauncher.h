@@ -26,7 +26,7 @@
 -(instancetype)initWithApplicationId:(NSString *) applicationId;
 
 -(void)launchIndividualChat:(NSString *)userId withGroupId:(NSNumber*)groupID andViewControllerObject:(UIViewController *)viewController andWithText:(NSString *)text;
-
+-(UINavigationController *)launchIndividualChatLevin:(NSString *)userId withGroupId:(NSNumber*)groupID  andViewControllerObject:(UIViewController *)viewController andWithText:(NSString *)text andName:(NSString *)diplayName;
 -(void)launchChatList:(NSString *)title andViewControllerObject:(UIViewController *)viewController;
 
 -(void) launchContactList: (UIViewController *)uiViewController ;

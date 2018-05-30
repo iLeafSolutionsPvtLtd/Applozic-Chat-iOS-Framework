@@ -92,10 +92,15 @@
 
 +(CGFloat)getChatCellHeight:(ALMessage *)alMessage andCellFrame:(CGRect)cellFrame  // NEED CHECK AGAIN TEXT CELL
 {
+    if ([alMessage.metadata[@"sticker"] length]>0){
+        return 140;
+    }else{
     CGSize theTextSize = [self textSize:alMessage andCellFrame:cellFrame];
     CGFloat HEIGHT = theTextSize.height + 70;
+         return HEIGHT;
+    }
     
-    return HEIGHT;
+   
 }
 
 +(CGFloat)getCustomChatCellHeight:(ALMessage *)alMessage andCellFrame:(CGRect)cellFrame
