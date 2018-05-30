@@ -458,19 +458,19 @@
     [self.typingLabel setHidden:YES];
     [[ALMediaPlayer sharedInstance] stopPlaying];
     
-    if(self.individualLaunch)
-    {
-        NSLog(@"ALChatVC: Individual launch ...unsubscribeToConversation to mqtt..");
-        if(self.mqttObject)
-        {
-            [self.mqttObject unsubscribeToConversation];
-            NSLog(@"ALChatVC: In ViewWillDisapper .. MQTTObject in ==IF== now");
-        }
-        else
-        {
-            NSLog(@"mqttObject is not found...");
-        }
-    }
+//    if(self.individualLaunch)
+//    {
+//        NSLog(@"ALChatVC: Individual launch ...unsubscribeToConversation to mqtt..");
+//        if(self.mqttObject)
+//        {
+//            [self.mqttObject unsubscribeToConversation];
+//            NSLog(@"ALChatVC: In ViewWillDisapper .. MQTTObject in ==IF== now");
+//        }
+//        else
+//        {
+//            NSLog(@"mqttObject is not found...");
+//        }
+//    }
     
     if(isPickerOpen)
     {
