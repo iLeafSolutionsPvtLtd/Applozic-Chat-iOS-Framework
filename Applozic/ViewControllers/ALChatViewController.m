@@ -4568,9 +4568,7 @@
     dispatch_after(DISPATCH_TIME_NOW+6.0, dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter]postNotificationName:@"BBCHATSENT" object:theMessage];
     });
-    dispatch_after(DISPATCH_TIME_NOW+6.0, dispatch_get_main_queue(), ^{
-        [[NSNotificationCenter defaultCenter]postNotificationName:@"BBCHATSENT" object:theMessage];
-    });
+   
     
 }
 @end
