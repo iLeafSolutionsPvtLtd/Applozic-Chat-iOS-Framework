@@ -188,6 +188,8 @@
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateVOIPMsg)
                                                  name:@"UPDATE_VOIP_MSG" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deleteConversation)
+                                                 name:@"deletechat" object:nil];
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:[[UIView alloc]initWithFrame:CGRectMake(0, 0, 20, 30)]] ;
     self.tabBarController.delegate = self;
 }
@@ -1500,6 +1502,9 @@
         [self.mqttObject sendTypingStatus:self.alContact.applicationId userID:self.contactIds
                             andChannelKey:self.channelKey typing:typingStat];
     }
+    dispatch_after(DISPATCH_TIME_NOW+6.0, dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter]postNotificationName:@"BBCHATSENT" object:theMessage];
+    });
 }
 
 - (IBAction)sendAction:(id)sender
@@ -4563,7 +4568,9 @@
     dispatch_after(DISPATCH_TIME_NOW+6.0, dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter]postNotificationName:@"BBCHATSENT" object:theMessage];
     });
-    
+    dispatch_after(DISPATCH_TIME_NOW+6.0, dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter]postNotificationName:@"BBCHATSENT" object:theMessage];
+    });
     
 }
 @end
