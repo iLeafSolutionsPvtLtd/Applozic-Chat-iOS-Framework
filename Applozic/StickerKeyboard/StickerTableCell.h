@@ -9,6 +9,8 @@
 #import "ALMessage.h"
 
 @interface StickerTableCell : UITableViewCell
+@property (nonatomic,retain) UIImageView * mUserProfileImageView;
+@property (retain, nonatomic) UILabel *mNameLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *ImageViewLeft;
 @property (weak, nonatomic) IBOutlet UIImageView *ImageViewRight;
 @property (weak, nonatomic) IBOutlet UILabel *lblDateRight;
